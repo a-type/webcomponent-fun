@@ -12,8 +12,8 @@ import {
 type CleanupFn = () => void;
 
 type WatchEffect = <Reactives extends Array<ReactiveValue<any>>>(
-  run: (...args: UnwrappedReactiveList<Reactives>) => void | CleanupFn,
   deps: Reactives,
+  run: (...args: UnwrappedReactiveList<Reactives>) => void | CleanupFn,
 ) => void;
 
 type Tools = {
@@ -48,7 +48,7 @@ export class ReactiveComponent<Props> extends HTMLElement {
         this._cleanups.push(node.cleanup);
         return node.cleanup;
       },
-      watch: (run, deps) => {
+      watch: (deps, run) => {
         let cleanup: CleanupFn | undefined = undefined;
         const callback = () => {
           if (cleanup) {

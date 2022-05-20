@@ -51,6 +51,8 @@ function appendChild(element: Element, child: any) {
   } else if (isReactiveValue(child)) {
     let current = child.get();
     appendChild(element, current);
+  } else if (child === null || child === undefined) {
+    // do nothing
   } else {
     try {
       const textNode = document.createTextNode(`${child}`);

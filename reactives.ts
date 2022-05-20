@@ -4,7 +4,7 @@ const reactiveTag = Symbol('@@isReactiveValue');
 const subscribers = Symbol('@@subscribers');
 const wrappedProps = Symbol('@@wrappedProps');
 
-export type BaseReactiveValue<T> = {
+export type BaseReactiveValue<T = unknown> = {
   [reactiveTag]: true;
   [subscribers]: Set<(value: T) => void>;
   [wrappedProps]: T extends Record<any, any> ? WrapReactiveProps<T> : {};
@@ -18,17 +18,31 @@ export function isReactiveValue(value: any): value is ReactiveValue<any> {
   return value && value[reactiveTag];
 }
 
-export type ReactiveList = Array<ReactiveValue<any>>;
+export type ReactiveList = Array<ReactiveValue<unknown>>;
 
 export type UnwrappedReactiveList<List extends ReactiveList> = {
   [K in keyof List]: List[K] extends ReactiveValue<infer T> ? T : never;
 };
 
-export type WrapReactiveProps<T extends Record<any, any>> = {
-  [K in keyof T]: T[K] extends ReactiveValue<any> ? T[K] : ReactiveValue<T[K]>;
-};
+export type UnwrappedReactive<T extends ReactiveValue> =
+  T extends ReactiveValue<infer U> ? U : never;
 
-export type ReactiveValue<T extends Record<any, any>> = BaseReactiveValue<T> &
+export type UnwrappedAnyReactiveAsList<T extends ReactiveValue | ReactiveList> =
+  T extends ReactiveValue<infer U>
+    ? [U]
+    : T extends ReactiveList
+    ? UnwrappedReactiveList<T>
+    : never;
+
+export type WrapReactiveProps<T extends unknown> = T extends Record<any, any>
+  ? {
+      [K in keyof T]: T[K] extends ReactiveValue<any>
+        ? T[K]
+        : ReactiveValue<T[K]>;
+    }
+  : {};
+
+export type ReactiveValue<T extends unknown = any> = BaseReactiveValue<T> &
   WrapReactiveProps<T>;
 
 export function wrapReactive<T>(value: T): ReactiveValue<T> {
@@ -59,11 +73,6 @@ export function wrapReactive<T>(value: T): ReactiveValue<T> {
         return valueContainer.current;
       },
       set(newValue: T) {
-        console.log(
-          `Value set: ${JSON.stringify(newValue)} (was: ${JSON.stringify(
-            valueContainer.current,
-          )})`,
-        );
         if (valueContainer.current === newValue) return;
         valueContainer.current = newValue;
         for (const callback of this[subscribers]) {
@@ -111,4 +120,20 @@ export function wrapReactive<T>(value: T): ReactiveValue<T> {
       },
     },
   );
+}
+
+export function from<In extends ReactiveValue | ReactiveList, Out>(
+  dependencies: In,
+  process: (...dependencies: UnwrappedAnyReactiveAsList<In>) => Out,
+) {
+  const depsArray = Array.isArray(dependencies) ? dependencies : [dependencies];
+  const collapseDependencies = () =>
+    depsArray.map((dep) => dep.get()) as UnwrappedAnyReactiveAsList<In>;
+  const reactive = wrapReactive(process(...collapseDependencies()));
+  for (const dependency of depsArray) {
+    dependency.subscribe(() => {
+      reactive.set(process(...collapseDependencies()));
+    });
+  }
+  return reactive;
 }
