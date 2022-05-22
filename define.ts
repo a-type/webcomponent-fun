@@ -1,37 +1,37 @@
+import { createNodeRenderer, RenderedNode } from './nodeRenderer';
 import {
-  createNodeRenderer,
-  NodeRendererFn,
-  RenderedNode,
-} from './nodeRenderer';
-import {
-  ReactiveValue,
-  UnwrappedReactiveList,
-  wrapReactive,
-} from './reactives';
+  ReactiveObject,
+  UnwrappedListOfReactives,
+  reactive,
+  ListOfReactives,
+  subscribe,
+} from './reactives2';
 
 type CleanupFn = () => void;
 
-type WatchEffect = <Reactives extends Array<ReactiveValue<any>>>(
+type WatchEffect = <Reactives extends ListOfReactives>(
   deps: Reactives,
-  run: (...args: UnwrappedReactiveList<Reactives>) => void | CleanupFn,
+  run: (...args: UnwrappedListOfReactives<Reactives>) => void | CleanupFn,
 ) => void;
 
 type Tools = {
   cleanup: (fn: CleanupFn) => void;
   ui: (node: RenderedNode) => void;
   watch: WatchEffect;
-  reactive: <T>(value: T) => ReactiveValue<T>;
+  reactive: typeof reactive;
 };
 
-type CreatorFn<Props> = (
-  props: ReactiveValue<Props>,
+type CreatorFn<Props extends Record<any, any>> = (
+  props: ReactiveObject<Props>,
   tools: Tools,
 ) => CleanupFn | void;
 
-export class ReactiveComponent<Props> extends HTMLElement {
+export class ReactiveComponent<
+  Props extends Record<any, any>,
+> extends HTMLElement {
   private _cleanups: CleanupFn[] = [];
   private shadow: ShadowRoot;
-  private props: ReactiveValue<Props>;
+  private props: ReactiveObject<Props>;
 
   constructor(private _creator: CreatorFn<Props>) {
     super();
@@ -54,10 +54,11 @@ export class ReactiveComponent<Props> extends HTMLElement {
           if (cleanup) {
             cleanup();
           }
-          cleanup = run(...(deps.map((dep) => dep.get()) as any)) || undefined;
+          cleanup =
+            run(...(deps.map((dep) => dep.current) as any)) || undefined;
         };
         callback();
-        const allCleanups = deps.map((dep) => dep.subscribe(callback));
+        const allCleanups = deps.map((dep) => subscribe(dep, callback));
         this._cleanups.push(() => {
           allCleanups.forEach((cleanup) => cleanup());
           if (cleanup) {
@@ -65,7 +66,7 @@ export class ReactiveComponent<Props> extends HTMLElement {
           }
         });
       },
-      reactive: wrapReactive,
+      reactive,
     });
     if (uncreate) {
       this._cleanups.push(uncreate);
@@ -77,10 +78,10 @@ export class ReactiveComponent<Props> extends HTMLElement {
   }
 
   setProps = (props: Props) => {
-    this.props = wrapReactive(props);
+    this.props = reactive(props) as ReactiveObject<Props>;
   };
 
-  getProps = (): ReactiveValue<Props> => {
+  getProps = (): ReactiveObject<Props> => {
     const props = this.props;
     // attribute overrides
     // for (const attr of this.attributes) {

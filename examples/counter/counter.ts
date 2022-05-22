@@ -45,7 +45,7 @@ const counter = define<{ count: number; running: boolean }>(
          * value
          */
         const interval = setInterval(() => {
-          count.value++;
+          count.current++;
         }, 1000);
         // return a cleanup to clear the interval
         return () => {
@@ -78,7 +78,7 @@ const root = natives.div({
     }),
     natives.button({
       onclick: () => {
-        appState.timerRunning.set(!appState.timerRunning.value);
+        appState.timerRunning.current = !appState.timerRunning.current;
       },
       children: [
         'Toggle: ',

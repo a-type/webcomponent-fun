@@ -1,4 +1,4 @@
-import { define, makeStore, natives, from, wrapReactive } from '../../index';
+import { define, makeStore, natives, from, reactive } from '../../index';
 
 type TodoItemData = {
   id: number;
@@ -49,7 +49,7 @@ const todoItem = define<TodoItemData>(
             type: 'checkbox',
             checked: done,
             onchange: () => {
-              done.value = !done.value;
+              done.current = !done.current;
             },
           }),
           natives.span({
@@ -78,7 +78,11 @@ const todoList = define<{ todos: TodoItemData[] }>(
     ui(
       natives.ul({
         class: 'todo-list',
-        children: from(todos, (todos) => todos.map((todo) => todoItem(todo))),
+        children: from(todos, (todos) => {
+          console.log(todos);
+          const result = todos.map((todo) => todoItem(todo));
+          return result;
+        }),
       }),
     );
   },
@@ -98,26 +102,29 @@ const addTodo = define<{ text: string }>('add-todo', ({ text }, { ui }) => {
   );
 
   ui(
-    natives.div({
+    natives.form({
       class: 'add-todo',
+      onsubmit: (ev) => {
+        ev.preventDefault();
+        appState.todos.push(
+          reactive({
+            id: appState.todos.length,
+            text: text.current,
+            done: false,
+          }),
+        );
+        text.current = '';
+      },
       children: [
         natives.input({
           type: 'text',
           value: text,
           onchange: (event) => {
-            text.value = (event.target as HTMLInputElement).value;
+            text.current = (event.target as HTMLInputElement).value;
           },
         }),
         natives.button({
           children: 'Add',
-          onclick: () => {
-            appState.todos.value.push({
-              id: appState.todos.length,
-              text: text.value,
-              done: false,
-            });
-            text.value = '';
-          },
         }),
       ],
     }),

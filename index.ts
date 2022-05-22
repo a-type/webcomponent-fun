@@ -1,5 +1,5 @@
 export * from './define';
 export * as natives from './natives';
 export * from './store';
-export { wrapReactive, isReactiveValue, from } from './reactives';
-export type { ReactiveValue, ReactiveList } from './reactives';
+export { reactive, isReactiveValue, from } from './reactives2';
+export type { AnyReactive, ListOfReactives } from './reactives2';

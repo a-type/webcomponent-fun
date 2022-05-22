@@ -1,6 +1,6 @@
 import { applyAttribute } from './attributes';
 import { ReactiveComponent } from './define';
-import { ReactiveValue } from './reactives';
+import { AnyReactive, Reactify, ReactiveObject } from './reactives2';
 
 const renderedNodeTag = Symbol('rendredNode');
 
@@ -13,9 +13,9 @@ export type RenderedNode = {
 export type NodeRendererFn<Props> = (props: Props) => RenderedNode;
 
 type PropsOrReactives<Props> = {
-  [K in keyof Props]: Props[K] extends ReactiveValue
+  [K in keyof Props]: Props[K] extends AnyReactive
     ? Props[K]
-    : Props[K] | ReactiveValue<Props[K]>;
+    : Props[K] | Reactify<Props[K]>;
 };
 
 export function createNodeRenderer<Props>(tag: string) {

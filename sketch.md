@@ -131,3 +131,34 @@ export const Counter = define<{ count: number; running: boolean }>(
   },
 );
 ```
+
+# disposables
+
+```ts
+const append = (parent: Element, child: Element) =>
+  disposable(
+    () => {
+      parent.appendChild(child);
+      return child;
+    },
+    (child) => child.remove(),
+  );
+
+const interval = disposable(
+  () =>
+    setInterval(() => {
+      count++;
+    }, 1000),
+  (interval) => clearInterval(interval),
+);
+
+effect([isTimerRunning], (isRunning) => {
+  if (isRunning) {
+    return interval;
+  } else {
+    const pausedLabel = document.createElement('span');
+    pausedLabel.textContent = 'paused';
+    return append(timerElement, pausedLabel);
+  }
+});
+```
