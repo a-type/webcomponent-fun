@@ -74,8 +74,8 @@ const root = natives.div({
       children: counter({
         count: 0,
         running: appState.timerRunning,
-      }).element,
-    }).element,
+      }),
+    }),
     natives.button({
       onclick: () => {
         appState.timerRunning.set(!appState.timerRunning.value);
@@ -84,8 +84,8 @@ const root = natives.div({
         'Toggle: ',
         from(appState.timerRunning, (running) => (running ? 'On' : 'Off')),
       ],
-    }).element,
+    }),
   ],
-}).element;
+});
 
-document.body.appendChild(root);
+document.body.appendChild(root.element);

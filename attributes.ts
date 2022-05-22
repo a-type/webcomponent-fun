@@ -1,4 +1,5 @@
-import { isReactiveValue, ReactiveValue } from './reactives';
+import { isRenderedNode } from './nodeRenderer';
+import { isReactiveValue } from './reactives';
 
 export function applyAttribute(element: Element, name: string, value: any) {
   subscribeToReactives(element, name, value);
@@ -11,6 +12,10 @@ function doAttributeApplication(element: Element, name: string, value: any) {
     applyChildren(element, resolvedValue);
   } else if (name.startsWith('on')) {
     element.addEventListener(name.slice(2), resolvedValue);
+  } else if (typeof resolvedValue === 'boolean') {
+    if (resolvedValue) {
+      element.setAttribute(name, '');
+    }
   } else {
     element.setAttribute(name, resolvedValue);
   }
@@ -53,6 +58,8 @@ function appendChild(element: Element, child: any) {
     appendChild(element, current);
   } else if (child === null || child === undefined) {
     // do nothing
+  } else if (isRenderedNode(child)) {
+    element.append(child.element);
   } else {
     try {
       const textNode = document.createTextNode(`${child}`);

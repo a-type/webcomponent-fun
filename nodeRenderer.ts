@@ -2,7 +2,10 @@ import { applyAttribute } from './attributes';
 import { ReactiveComponent } from './define';
 import { ReactiveValue } from './reactives';
 
+const renderedNodeTag = Symbol('rendredNode');
+
 export type RenderedNode = {
+  [renderedNodeTag]: true;
   element: Element;
   cleanup: () => void;
 };
@@ -16,7 +19,7 @@ type PropsOrReactives<Props> = {
 };
 
 export function createNodeRenderer<Props>(tag: string) {
-  return function (props: PropsOrReactives<Props>) {
+  return function (props: PropsOrReactives<Props>): RenderedNode {
     const element = document.createElement(tag);
     if (element instanceof ReactiveComponent) {
       element.setProps(props);
@@ -25,10 +28,15 @@ export function createNodeRenderer<Props>(tag: string) {
       applyAttribute(element, name, value);
     }
     return {
+      [renderedNodeTag]: true,
       element,
       cleanup: () => {
         element.remove();
       },
     };
   };
+}
+
+export function isRenderedNode(node: any): node is RenderedNode {
+  return node && node[renderedNodeTag];
 }
