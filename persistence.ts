@@ -31,7 +31,7 @@ async function hydrate(db: IDBDatabase) {
     const request = objectStore.getAll();
     request.onsuccess = (event) => {
       for (const obj of request.result) {
-        persistedObjects[obj.id] = obj;
+        storageRoots[obj.id] = obj;
         hydrationCallbacks[obj.id]?.(obj);
       }
       resolve();

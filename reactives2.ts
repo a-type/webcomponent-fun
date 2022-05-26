@@ -143,18 +143,24 @@ export function isReactivePrimitive(
 
 const wrappedCache = new WeakMap<any, BaseReactive<any>>();
 
-export function reactive<T>(value: T): Reactify<T> {
+export function reactive<T>(value: T, hydrateId?: string): Reactify<T> {
+  let reactiveToHydrate;
   if (isReactiveValue(value)) {
-    return value as Reactify<T>;
+    reactiveToHydrate = value as Reactify<T>;
   } else if (isPrimitive(value)) {
-    return createReactivePrimitive(value) as any;
+    reactiveToHydrate = createReactivePrimitive(value) as any;
   } else if (value instanceof Element) {
-    return createReactiveElement(value) as any;
+    reactiveToHydrate = createReactiveElement(value) as any;
   } else if (typeof value === 'object') {
-    return createReactiveObject(value as any) as any;
+    reactiveToHydrate = createReactiveObject(value as any) as any;
   } else {
     throw new Error('unsupported reactive type');
   }
+
+  if (hydrateId) {
+  }
+
+  return reactiveToHydrate;
 }
 
 function createBaseReactive<T>() {
